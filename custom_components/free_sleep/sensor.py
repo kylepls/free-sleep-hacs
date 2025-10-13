@@ -1,74 +1,70 @@
 
 from __future__ import annotations
 
-from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
-from homeassistant.config_entries import ConfigEntry
+from typing import Any
+
+from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import FreeSleepCoordinator
 from .const import DOMAIN
+from . import FreeSleepCoordinator
 
-SENSOR_SPECS = [
-    ("heart_rate", "Heart Rate", "bpm"),
-    ("breath_rate", "Breath Rate", "rpm"),
-    ("hrv", "HRV", "ms"),
-    ("left_temp_level", "Left Temp Level", None),
-    ("right_temp_level", "Right Temp Level", None),
-    ("pod_online", "Pod Online", None),
-]
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    coordinator: FreeSleepCoordinator = hass.data[DOMAIN][entry.entry_id]
-    entities: list[SensorEntity] = [FreeSleepGenericSensor(coordinator, key, name, unit) for key, name, unit in SENSOR_SPECS]
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
+    data = hass.data[DOMAIN][entry.entry_id]
+    coordinator: FreeSleepCoordinator = data["coordinator"]
+    entities = [
+        LastPrimeSensor(coordinator, entry),
+        SideSecondsRemaining(coordinator, entry, side="left"),
+        SideSecondsRemaining(coordinator, entry, side="right"),
+    ]
     async_add_entities(entities)
 
-class FreeSleepGenericSensor(CoordinatorEntity[FreeSleepCoordinator], SensorEntity):
-    _attr_has_entity_name = True
+class LastPrimeSensor(CoordinatorEntity, SensorEntity):
+    _attr_name = "Free Sleep Last Prime"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
 
-    def __init__(self, coordinator: FreeSleepCoordinator, key: str, name: str, unit: str | None):
+    def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry):
         super().__init__(coordinator)
-        self._key = key
-        self._attr_unique_id = f"{coordinator.host}_{key}"
-        self._attr_name = name
-        if unit:
-            self._attr_native_unit_of_measurement = unit
+        self._entry = entry
+        self._attr_unique_id = f"{entry.entry_id}_last_prime"
 
     @property
     def native_value(self):
-        data = self.coordinator.data or {}
-        vitals = data.get("vitals")
-        status = data.get("deviceStatus") or {}
-        # vitals may be a list; grab latest item if so
-        if isinstance(vitals, list) and vitals:
-            latest = vitals[-1]
-        elif isinstance(vitals, dict):
-            latest = vitals
-        else:
-            latest = {}
-
-        # Heuristics for keys (handles different spellings)
-        if self._key == "heart_rate":
-            return latest.get("heart_rate") or latest.get("hr") or latest.get("heartRate")
-        if self._key == "breath_rate":
-            return latest.get("breath_rate") or latest.get("br") or latest.get("breathRate")
-        if self._key == "hrv":
-            return latest.get("hrv")
-        if self._key == "left_temp_level":
-            return status.get("left_temp_level") or status.get("leftTempLevel") or status.get("left_temp")
-        if self._key == "right_temp_level":
-            return status.get("right_temp_level") or status.get("rightTempLevel") or status.get("right_temp")
-        if self._key == "pod_online":
-            return 1 if (status.get("online") or status.get("pod_online") or status.get("isOnline")) else 0
-        return None
+        return (self.coordinator.data.get("settings") or {}).get("lastPrime")
 
     @property
-    def extra_state_attributes(self):
-        # Attach raw payloads for power users
+    def device_info(self):
         return {
-            "deviceStatus": self.coordinator.data.get("deviceStatus"),
-            "settings": self.coordinator.data.get("settings"),
-            "vitals_sample": (self.coordinator.data.get("vitals") or [])[-1] if isinstance(self.coordinator.data.get("vitals"), list) and self.coordinator.data.get("vitals") else self.coordinator.data.get("vitals"),
-            "source": self.coordinator.base_url,
+            "identifiers": {(DOMAIN, f"{self._entry.entry_id}_hub")},
+            "name": "Free Sleep Hub",
+            "manufacturer": "free-sleep (Unofficial)",
+        }
+
+class SideSecondsRemaining(CoordinatorEntity, SensorEntity):
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = "s"
+
+    def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry, side: str):
+        super().__init__(coordinator)
+        self._entry = entry
+        self._side = side
+        self._attr_name = f"Free Sleep {side.capitalize()} Seconds Remaining"
+        self._attr_unique_id = f"{entry.entry_id}_{side}_seconds_remaining"
+
+    @property
+    def native_value(self):
+        side = self.coordinator.data["device_status"].get(self._side, {})
+        return side.get("secondsRemaining")
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, f"{self._entry.entry_id}_{self._side}_device")},
+            "name": f"Free Sleep {self._side.capitalize()}",
+            "manufacturer": "free-sleep (Unofficial)",
+            "via_device": (DOMAIN, f"{self._entry.entry_id}_hub"),
         }
