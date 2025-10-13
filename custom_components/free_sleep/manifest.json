@@ -3,6 +3,7 @@
   "name": "Free Sleep",
   "version": "0.1.0",
   "documentation": "https://github.com/throwaway31265/free-sleep",
+  "issue_tracker": "https://github.com/shreyasajj/free-sleep-hacs/issues",
   "requirements": [],
   "codeowners": [
     "@throwaway31265",
