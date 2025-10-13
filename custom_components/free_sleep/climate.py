@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Any
@@ -9,7 +8,7 @@ from homeassistant.components.climate.const import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.const import TEMP_FAHRENHEIT, ATTR_TEMPERATURE
+from homeassistant.const import UnitOfTemperature, ATTR_TEMPERATURE
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -28,7 +27,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     async_add_entities(entities)
 
 class FreeSleepSideClimate(CoordinatorEntity, ClimateEntity):
-    _attr_temperature_unit = TEMP_FAHRENHEIT
+    _attr_temperature_unit = UnitOfTemperature.FAHRENHEIT
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_hvac_modes = [HVACMode.HEAT_COOL, HVACMode.OFF]
 
@@ -41,7 +40,6 @@ class FreeSleepSideClimate(CoordinatorEntity, ClimateEntity):
 
     @property
     def device_info(self):
-        # This is a child device of the hub
         return {
             "identifiers": {(DOMAIN, f"{self._entry.entry_id}_{self._side}_device")},
             "name": f"Free Sleep {self._side.capitalize()}",
