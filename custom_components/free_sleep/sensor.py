@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
@@ -8,6 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from . import FreeSleepCoordinator
@@ -33,7 +35,19 @@ class LastPrimeSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self):
-        return (self.coordinator.data.get("settings") or {}).get("lastPrime")
+        raw = (self.coordinator.data.get("settings") or {}).get("lastPrime")
+        if not raw:
+            return None
+        # Try HA's robust parser first
+        dt = dt_util.parse_datetime(raw)
+        if dt is None:
+            try:
+                dt = datetime.fromisoformat(raw.replace('Z', '+00:00'))
+            except Exception:
+                return None
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
 
     @property
     def device_info(self):
