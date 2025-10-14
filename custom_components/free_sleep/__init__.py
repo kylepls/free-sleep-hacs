@@ -28,8 +28,6 @@ from .coordinator import FreeSleepClient
 
 _LOGGER = logging.getLogger(__name__)
 
-type FreeSleepData = dict[str, any]
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     client = FreeSleepClient(hass, entry)
     coordinator = FreeSleepCoordinator(hass, client, entry)
@@ -84,7 +82,6 @@ class FreeSleepCoordinator(DataUpdateCoordinator):
         async def _nightly_cb(now):
             await self._refresh_vitals_cache()
 
-        # Schedule daily at hh:mm local time
         from homeassistant.helpers.event import async_track_time_change
         self._unsub_vitals = async_track_time_change(self.hass, _nightly_cb, hour=hh, minute=mm, second=0)
 

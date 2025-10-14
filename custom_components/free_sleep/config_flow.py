@@ -62,8 +62,9 @@ class FreeSleepConfigFlow(ConfigFlow, domain=DOMAIN):
         })
         return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
 
+    @staticmethod
     @callback
-    def async_get_options_flow(self, config_entry):
+    def async_get_options_flow(config_entry):
         return FreeSleepOptionsFlowHandler(config_entry)
 
 class FreeSleepOptionsFlowHandler(OptionsFlow):

@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from homeassistant.components.binary_sensor import BinarySensorEntity, BinarySensorDeviceClass
