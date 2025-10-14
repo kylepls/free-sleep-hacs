@@ -76,38 +76,37 @@ class FreeSleepOptionsFlowHandler(OptionsFlow):
 
     async def async_step_general(self, user_input=None):
         if user_input is not None:
-            # Validate and persist
-            hours = int(user_input.get(CONF_VITALS_WINDOW_HOURS, DEFAULT_VITALS_WINDOW_HOURS))
+            hours = int(user_input.get("vitals_window_hours", 24))
             hours = max(1, min(hours, 168))
 
-            interval = int(user_input.get(CONF_UPDATE_INTERVAL_SECS, UPDATE_INTERVAL_SECS_DEFAULT))
+            interval = int(user_input.get("update_interval_secs", 15))
             interval = max(5, min(interval, 3600))
 
-            mode = user_input.get(CONF_VITALS_MODE, VITALS_MODE_POLLING)
-            if mode not in (VITALS_MODE_POLLING, VITALS_MODE_NIGHTLY):
-                mode = VITALS_MODE_POLLING
+            mode = user_input.get("vitals_mode", "polling")
+            if mode not in ("polling", "nightly"):
+                mode = "polling"
 
-            nightly_time = user_input.get(CONF_VITALS_NIGHTLY_TIME, "02:00")
+            nightly_time = user_input.get("vitals_nightly_time", "02:00")
             if not isinstance(nightly_time, str) or ":" not in nightly_time:
                 nightly_time = "02:00"
 
-            poll_secs = int(user_input.get(CONF_VITALS_POLL_SECS, VITALS_POLL_SECS_DEFAULT))
+            poll_secs = int(user_input.get("vitals_poll_secs", 900))
             poll_secs = max(15, min(poll_secs, 86400))
 
             return self.async_create_entry(title="", data={
-                CONF_VITALS_WINDOW_HOURS: hours,
-                CONF_UPDATE_INTERVAL_SECS: interval,
-                CONF_VITALS_MODE: mode,
-                CONF_VITALS_NIGHTLY_TIME: nightly_time,
-                CONF_VITALS_POLL_SECS: poll_secs,
+                "vitals_window_hours": hours,
+                "update_interval_secs": interval,
+                "vitals_mode": mode,
+                "vitals_nightly_time": nightly_time,
+                "vitals_poll_secs": poll_secs,
             })
 
         opts = self.config_entry.options
         schema = vol.Schema({
-            vol.Required(CONF_VITALS_WINDOW_HOURS, default=opts.get(CONF_VITALS_WINDOW_HOURS, DEFAULT_VITALS_WINDOW_HOURS)): int,
-            vol.Required(CONF_UPDATE_INTERVAL_SECS, default=opts.get(CONF_UPDATE_INTERVAL_SECS, UPDATE_INTERVAL_SECS_DEFAULT)): int,
-            vol.Required(CONF_VITALS_MODE, default=opts.get(CONF_VITALS_MODE, VITALS_MODE_POLLING)): vol.In([VITALS_MODE_POLLING, VITALS_MODE_NIGHTLY]),
-            vol.Required(CONF_VITALS_NIGHTLY_TIME, default=opts.get(CONF_VITALS_NIGHTLY_TIME, "02:00")): str,
-            vol.Required(CONF_VITALS_POLL_SECS, default=opts.get(CONF_VITALS_POLL_SECS, VITALS_POLL_SECS_DEFAULT)): int,
+            vol.Required("vitals_window_hours", default=opts.get("vitals_window_hours", 24)): int,
+            vol.Required("update_interval_secs", default=opts.get("update_interval_secs", 15)): int,
+            vol.Required("vitals_mode", default=opts.get("vitals_mode", "polling")): vol.In(["polling", "nightly"]),
+            vol.Required("vitals_nightly_time", default=opts.get("vitals_nightly_time", "02:00")): str,
+            vol.Required("vitals_poll_secs", default=opts.get("vitals_poll_secs", 900)): int,
         })
         return self.async_show_form(step_id="general", data_schema=schema)
