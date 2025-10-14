@@ -1,42 +1,44 @@
-
 from __future__ import annotations
-
 import logging
 from typing import Any
 from datetime import datetime, timezone, timedelta
-
+from urllib.parse import urlparse
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
-from .const import (
-    CONF_BASE_URL,
-    CONF_PORT,
-    DEFAULT_PORT,
-    API_VITALS_SUMMARY,
-)
+from .const import CONF_BASE_URL, CONF_PORT, DEFAULT_PORT, API_VITALS_SUMMARY
 
 _LOGGER = logging.getLogger(__name__)
 
-def path_join(base: str, *parts: str) -> str:
-    base = base.rstrip("/")
-    tail = "/".join(p.lstrip("/") for p in parts)
-    return f"{base}/{tail}"
+def _normalize_base(base_url: str, port: int | None) -> str:
+    if not base_url.startswith(("http://", "https://")):
+        base_url = f"http://{base_url}"
+    u = urlparse(base_url)
+    scheme = u.scheme or "http"
+    host = u.hostname or ""
+    final_port = port if port else u.port
+    netloc = f"{host}:{final_port}" if final_port else host
+    return f"{scheme}://{netloc}"
 
 def iso_z(dt: datetime) -> str:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
+def path_join(base: str, *parts: str) -> str:
+    base = base.rstrip("/")
+    tail = "/".join(p.lstrip("/") for p in parts)
+    return f"{base}/{tail}"
+
 class FreeSleepClient:
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry | None, *, base_url: str | None=None, port: int | None=None):
         self._hass = hass
         if entry:
-            data = entry.data
-            self.base_url = f"{data[CONF_BASE_URL].rstrip('/')}:{data.get(CONF_PORT, DEFAULT_PORT)}"
+            raw_base = entry.data[CONF_BASE_URL]
+            raw_port = entry.data.get(CONF_PORT, DEFAULT_PORT)
+            self.base_url = _normalize_base(raw_base, raw_port)
         else:
-            self.base_url = f"{base_url.rstrip('/')}:{port or DEFAULT_PORT}"
-        # Use HA's shared aiohttp session (HA manages lifecycle)
+            self.base_url = _normalize_base(base_url or "http://localhost", port or DEFAULT_PORT)
         self._session = async_get_clientsession(hass)
 
     async def get(self, path: str, params: dict[str, Any] | None = None) -> Any:
@@ -57,11 +59,7 @@ class FreeSleepClient:
     async def get_vitals_summary(self, side: str, window_hours: int) -> dict[str, Any] | None:
         now = datetime.now(timezone.utc)
         start = now - timedelta(hours=window_hours)
-        params = {
-            "startTime": iso_z(start),
-            "endTime": iso_z(now),
-            "side": side,
-        }
+        params = {"startTime": iso_z(start), "endTime": iso_z(now), "side": side}
         try:
             return await self.get(API_VITALS_SUMMARY, params=params)
         except Exception as e:
