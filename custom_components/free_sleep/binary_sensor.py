@@ -1,8 +1,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from homeassistant.components.binary_sensor import BinarySensorEntity, BinarySensorDeviceClass
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
@@ -12,16 +10,28 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
 from . import FreeSleepCoordinator
 
+def _resolve_side_name(settings: dict, side: str) -> str:
+    try:
+        name = (settings or {}).get(side, {}).get("name")
+        if isinstance(name, str) and name.strip():
+            return name.strip()
+    except Exception:
+        pass
+    return side.capitalize()
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator: FreeSleepCoordinator = data["coordinator"]
+    settings = coordinator.data.get("settings") or {}
+    left_name = _resolve_side_name(settings, "left")
+    right_name = _resolve_side_name(settings, "right")
+
     entities = [
-        # Hub-level
         WaterLevelOKBinary(coordinator, entry),
         IsPrimingBinary(coordinator, entry),
-        # Sides
-        SideAlarmBinary(coordinator, entry, side="left"),
-        SideAlarmBinary(coordinator, entry, side="right"),
+        SideAlarmBinary(coordinator, entry, side="left", side_name=left_name),
+        SideAlarmBinary(coordinator, entry, side="right", side_name=right_name),
     ]
     async_add_entities(entities)
 
@@ -41,12 +51,12 @@ class HubBaseEntity(CoordinatorEntity, BinarySensorEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, f"{self._entry.entry_id}_hub")},
-            "name": "Free Sleep Hub",
+            "name": "Hub",
             "manufacturer": "free-sleep (Unofficial)",
         }
 
 class WaterLevelOKBinary(HubBaseEntity):
-    _attr_name = "Free Sleep Water Level OK"
+    _attr_name = "Water Level Problem"
     _attr_unique_id_suffix = "water_level_ok"
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
 
@@ -56,10 +66,9 @@ class WaterLevelOKBinary(HubBaseEntity):
 
     @property
     def is_on(self) -> bool | None:
-        # Problem class: on = problem. We invert so that on=True means problem.
         val = self.coordinator.data["device_status"].get("waterLevel")
         ok = _parse_bool(val)
-        return not ok  # True = problem
+        return not ok
 
     @property
     def extra_state_attributes(self):
@@ -67,7 +76,7 @@ class WaterLevelOKBinary(HubBaseEntity):
         return {"raw_waterLevel": val}
 
 class IsPrimingBinary(HubBaseEntity):
-    _attr_name = "Free Sleep Priming"
+    _attr_name = "Priming"
     _attr_unique_id_suffix = "is_priming"
 
     @property
@@ -79,11 +88,12 @@ class IsPrimingBinary(HubBaseEntity):
         return _parse_bool(self.coordinator.data["device_status"].get("isPriming"))
 
 class SideAlarmBinary(CoordinatorEntity, BinarySensorEntity):
-    def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry, side: str):
+    def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry, side: str, side_name: str):
         super().__init__(coordinator)
         self._entry = entry
         self._side = side
-        self._attr_name = f"Free Sleep {side.capitalize()} Alarm Active"
+        self._side_name = side_name
+        self._attr_name = f"{side_name} Alarm Active"
         self._attr_unique_id = f"{entry.entry_id}_{side}_alarm"
 
     @property
@@ -95,7 +105,7 @@ class SideAlarmBinary(CoordinatorEntity, BinarySensorEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, f"{self._entry.entry_id}_{self._side}_device")},
-            "name": f"Free Sleep {self._side.capitalize()}",
+            "name": self._side_name,
             "manufacturer": "free-sleep (Unofficial)",
             "via_device": (DOMAIN, f"{self._entry.entry_id}_hub"),
         }

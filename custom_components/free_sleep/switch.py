@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 from typing import Any
@@ -11,13 +12,26 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, API_SETTINGS
 from . import FreeSleepCoordinator
 
+def _resolve_side_name(settings: dict, side: str) -> str:
+    try:
+        name = (settings or {}).get(side, {}).get("name")
+        if isinstance(name, str) and name.strip():
+            return name.strip()
+    except Exception:
+        pass
+    return side.capitalize()
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator: FreeSleepCoordinator = data["coordinator"]
+    settings = coordinator.data.get("settings") or {}
+    left_name = _resolve_side_name(settings, "left")
+    right_name = _resolve_side_name(settings, "right")
     entities = [
         LinkBothSidesSwitch(coordinator, entry),
-        SideAwayModeSwitch(coordinator, entry, side="left"),
-        SideAwayModeSwitch(coordinator, entry, side="right"),
+        SideAwayModeSwitch(coordinator, entry, side="left", side_name=left_name),
+        SideAwayModeSwitch(coordinator, entry, side="right", side_name=right_name),
     ]
     async_add_entities(entities)
 
@@ -25,7 +39,7 @@ class LinkBothSidesSwitch(CoordinatorEntity, SwitchEntity):
     def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry):
         super().__init__(coordinator)
         self._entry = entry
-        self._attr_name = "Free Sleep Link Both Sides"
+        self._attr_name = "Link Both Sides"
         self._attr_unique_id = f"{entry.entry_id}_link_both_sides"
 
     @property
@@ -37,7 +51,7 @@ class LinkBothSidesSwitch(CoordinatorEntity, SwitchEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, f"{self._entry.entry_id}_hub")},
-            "name": "Free Sleep Hub",
+            "name": "Hub",
             "manufacturer": "free-sleep (Unofficial)",
         }
 
@@ -50,11 +64,12 @@ class LinkBothSidesSwitch(CoordinatorEntity, SwitchEntity):
         await self.coordinator.async_request_refresh()
 
 class SideAwayModeSwitch(CoordinatorEntity, SwitchEntity):
-    def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry, side: str):
+    def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry, side: str, side_name: str):
         super().__init__(coordinator)
         self._entry = entry
         self._side = side
-        self._attr_name = f"Free Sleep {side.capitalize()} Away Mode"
+        self._side_name = side_name
+        self._attr_name = f"{side_name} Away Mode"
         self._attr_unique_id = f"{entry.entry_id}_{side}_away_mode"
 
     @property
@@ -67,7 +82,7 @@ class SideAwayModeSwitch(CoordinatorEntity, SwitchEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, f"{self._entry.entry_id}_{self._side}_device")},
-            "name": f"Free Sleep {self._side.capitalize()}",
+            "name": self._side_name,
             "manufacturer": "free-sleep (Unofficial)",
             "via_device": (DOMAIN, f"{self._entry.entry_id}_hub"),
         }

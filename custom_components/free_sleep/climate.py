@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 from typing import Any
@@ -17,12 +18,25 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, API_DEVICE_STATUS
 from . import FreeSleepCoordinator
 
+
+def _resolve_side_name(settings: dict, side: str) -> str:
+    try:
+        name = (settings or {}).get(side, {}).get("name")
+        if isinstance(name, str) and name.strip():
+            return name.strip()
+    except Exception:
+        pass
+    return side.capitalize()
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator: FreeSleepCoordinator = data["coordinator"]
+    settings = coordinator.data.get("settings") or {}
+
     entities = [
-        FreeSleepSideClimate(coordinator, entry, side="left"),
-        FreeSleepSideClimate(coordinator, entry, side="right"),
+        FreeSleepSideClimate(coordinator, entry, side="left", side_name=_resolve_side_name(settings, "left")),
+        FreeSleepSideClimate(coordinator, entry, side="right", side_name=_resolve_side_name(settings, "right")),
     ]
     async_add_entities(entities)
 
@@ -31,18 +45,19 @@ class FreeSleepSideClimate(CoordinatorEntity, ClimateEntity):
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_hvac_modes = [HVACMode.HEAT_COOL, HVACMode.OFF]
 
-    def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry, side: str):
+    def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry, side: str, side_name: str):
         super().__init__(coordinator)
         self._entry = entry
         self._side = side
-        self._attr_name = f"Free Sleep {side.capitalize()} Climate"
+        self._side_name = side_name
+        self._attr_name = f"{side_name} Climate"
         self._attr_unique_id = f"{entry.entry_id}_{side}_climate"
 
     @property
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, f"{self._entry.entry_id}_{self._side}_device")},
-            "name": f"Free Sleep {self._side.capitalize()}",
+            "name": self._side_name,
             "manufacturer": "free-sleep (Unofficial)",
             "via_device": (DOMAIN, f"{self._entry.entry_id}_hub"),
         }
