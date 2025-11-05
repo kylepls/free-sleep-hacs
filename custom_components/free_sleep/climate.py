@@ -73,6 +73,18 @@ class FreeSleepSideClimate(CoordinatorEntity, ClimateEntity):
         return side.get("targetTemperatureF")
 
     @property
+    def min_temp(self) -> float:
+        return 55.0
+
+    @property
+    def max_temp(self) -> float:
+        return 115.0
+
+    @property
+    def target_temperature_step(self) -> float:
+        return 1.0
+
+    @property
     def hvac_action(self) -> HVACAction | None:
         side = self.coordinator.data["device_status"].get(self._side, {})
         is_on = side.get("isOn")
@@ -90,6 +102,12 @@ class FreeSleepSideClimate(CoordinatorEntity, ClimateEntity):
     def hvac_mode(self) -> HVACMode:
         side = self.coordinator.data["device_status"].get(self._side, {})
         return HVACMode.HEAT_COOL if side.get("isOn") else HVACMode.OFF
+
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        client = self.coordinator.client
+        is_on = hvac_mode != HVACMode.OFF
+        await client.post(API_DEVICE_STATUS, {self._side: {"isOn": is_on}})
+        await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         if (temp := kwargs.get(ATTR_TEMPERATURE)) is None:

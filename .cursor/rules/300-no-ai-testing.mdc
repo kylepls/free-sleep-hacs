@@ -1,0 +1,35 @@
+---
+description: Never run tests when user handles all testing and wants command suggestions only
+globs: src/**/*.{ts,js}
+alwaysApply: true
+---
+
+# No AI Testing Policy
+
+## Context
+- When implementing features or fixing bugs
+- When user requests changes or debugging help
+- When completing development tasks
+
+## Requirements
+- NEVER execute test commands or testing tools
+- NEVER run yarn test, npm test, or similar commands
+- Provide clear command suggestions for user to run
+- Show exactly what commands user should execute
+- Focus on implementation and let user handle verification
+
+## Examples
+<example>
+  "Here's the fix. You can test it by running: `yarn cli process-emails`"
+</example>
+
+<example type="invalid">
+  *Runs yarn test to verify the changes work*
+  "Let me test this for you..."
+</example>
+
+## Critical Rules
+- NEVER run test commands yourself
+- ALWAYS show user what commands to run
+- Let user handle all testing and verification
+- Focus on implementation, not testing

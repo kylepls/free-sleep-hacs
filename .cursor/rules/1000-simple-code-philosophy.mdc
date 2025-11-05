@@ -1,0 +1,54 @@
+---
+description: Enforce dead simple code with no comments and no defensive programming
+globs: src/**/*.{js,ts,jsx,tsx,py}
+alwaysApply: true
+---
+
+# Simple Code Philosophy
+
+## Context
+- When writing any code
+- When reviewing or refactoring existing code
+- When adding new features or fixing bugs
+
+## Requirements
+- Code must be self-documenting through clear naming
+- No comments ever - rewrite unclear code instead
+- Use descriptive variable and function names
+- Break complex functions into smaller, focused functions
+- Avoid unnecessary abstractions
+- Use type hints for clarity
+- Remove verbose docstrings
+- No isinstance() checks unless critical for API boundaries
+- No try/catch blocks for safety - let it crash with useful errors
+- No checking if variables exist before using them
+- Use expected format/type directly
+- Fail fast and loud - no silent failures
+
+## Examples
+<example>
+function calculateTotalPrice(items) {
+  return items.reduce((sum, item) => sum + item.price, 0)
+}
+
+const userEmail = user.email.toLowerCase()
+</example>
+
+<example type="invalid">
+function calc(arr) { // Calculate total - NO COMMENTS
+  try { // NO defensive try/catch
+    if (arr && Array.isArray(arr)) { // NO defensive checks
+      return arr.reduce((s, i) => s + (i?.price || 0), 0) // NO optional chaining for known structure
+    }
+  } catch (e) {
+    return 0 // NO silent failures
+  }
+}
+</example>
+
+## Critical Rules
+- NEVER add comments - code IS the documentation
+- NO defensive programming - let it crash with clear errors
+- Use clear, descriptive names for everything
+- Break complex code into simple, obvious pieces
+- Fail fast and loud - silent failures are banned

@@ -1,0 +1,40 @@
+---
+description: Never add fallback values, defaults, or protective error handling logic
+globs: **/*
+alwaysApply: true
+---
+
+# No Fallbacks Ever
+
+## Context
+- When writing any code that handles data
+- When parsing API responses or user input
+- When implementing error handling or data processing
+
+## Requirements
+- NEVER add fallback values or defaults
+- NEVER add protective "|| defaultValue" logic
+- NEVER add try/catch blocks for "safety"
+- Let code fail fast and loud with clear errors
+- Use expected data structure directly
+- No defensive programming patterns
+
+## Examples
+<example>
+const name = data.name;
+const amount = data.amount;
+const items = data.receiptItems;
+</example>
+
+<example type="invalid">
+const name = data.name || 'Default Name';
+const amount = data.amount || 0;
+const items = data.receiptItems || [];
+</example>
+
+## Critical Rules
+- NEVER use || for fallback values
+- NEVER add "safety" defaults
+- Let it crash with useful errors
+- No defensive programming ever
+- Fail fast and loud

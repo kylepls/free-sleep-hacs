@@ -1,0 +1,36 @@
+---
+description: Never create demo files or examples when implementing features
+globs: **/*
+alwaysApply: true
+---
+
+# No Demo Files Policy
+
+## Context
+- When implementing new features or APIs
+- When adding new functionality to existing systems
+- When updating interfaces or libraries
+
+## Requirements
+- NEVER create demo files, example scripts, or sample implementations
+- Directly integrate new functionality into existing code
+- Focus on production implementation only
+- Update actual usage points in the codebase
+
+## Examples
+<example>
+User asks to add grammar constraints to LLM inference.
+Response: Update the actual inference calls in commentary_action.py to use the new grammar features.
+</example>
+
+<example type="invalid">
+User asks to add grammar constraints to LLM inference.
+Response: Create examples/grammar_demo.py and docs/guide.md to show how to use it.
+</example>
+
+## Critical Rules
+- NEVER create files in examples/ directories
+- NEVER create demo scripts or sample files
+- NEVER create documentation files unless explicitly requested
+- Always integrate directly into existing production code
+- Focus on actual implementation, not demonstrations

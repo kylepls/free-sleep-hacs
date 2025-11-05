@@ -1,0 +1,57 @@
+---
+description: Use Python logging module with structured format for consistent, parseable output
+globs: src/**/*.py
+alwaysApply: true
+---
+
+# Python Logging Standards
+
+## Context
+- When writing logging statements in Python
+- When adding debug or informational output
+- When logging application events or errors
+
+## Requirements
+- Use Python's logging module, NOT print statements
+- Create logger with `logging.getLogger(__name__)` pattern
+- Use hybrid format: readable message + key=value pairs for data
+- NO emojis in any log messages
+- Include relevant context as key=value pairs
+- Use consistent log levels (debug, info, warning, error)
+- Keep messages human-readable and actionable
+- Include service=, error=, count=, etc. for structured data
+
+## Examples
+<example>
+import logging
+
+logger = logging.getLogger(__name__)
+
+logger.info('Starting email processing count=5 status=started')
+logger.info('Connected to Gmail service=gmail status=success')
+logger.error('Failed to create transaction error="Invalid amount" id=123 status=failed')
+logger.debug(f'Player properties sorted: {player_properties_sorted}')
+logger.info(f'Player {player_number}-{player_name} is {piece_name}')
+</example>
+
+<example type="invalid">
+print('🚀 Starting email processing...')
+print('✅ Successfully processed emails')
+print('❌ Failed to connect to Gmail')
+
+# Don't use print statements
+print(f"Processing {count} items")
+
+# Don't use emojis
+logger.info('🎮 Game started successfully!')
+</example>
+
+## Critical Rules
+- ALWAYS use `logging.getLogger(__name__)` to create loggers
+- NEVER use print statements for logging
+- NEVER use emojis in log messages
+- Use hybrid format: readable message + key=value pairs for data
+- Include service= to identify the component
+- Include error=, count=, status= for relevant data
+- Quote values that contain spaces or special characters
+- Use f-strings for dynamic content in messages
