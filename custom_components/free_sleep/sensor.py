@@ -79,6 +79,7 @@ class LastPrimeSensor(CoordinatorEntity, SensorEntity):
             "identifiers": {(DOMAIN, f"{self._entry.entry_id}_hub")},
             "name": "Hub",
             "manufacturer": "free-sleep (Unofficial)",
+            "icon": "mdi:bed",
         }
 
 class SideSecondsRemaining(CoordinatorEntity, SensorEntity):

@@ -28,6 +28,7 @@ class PrimeNowButton(CoordinatorEntity, ButtonEntity):
             "identifiers": {(DOMAIN, f"{self._entry.entry_id}_hub")},
             "name": "Free Sleep Hub",
             "manufacturer": "free-sleep (Unofficial)",
+            "icon": "mdi:bed",
         }
 
     async def async_press(self) -> None:

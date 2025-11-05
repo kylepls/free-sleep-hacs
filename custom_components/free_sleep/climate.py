@@ -44,6 +44,7 @@ class FreeSleepSideClimate(CoordinatorEntity, ClimateEntity):
     _attr_temperature_unit = UnitOfTemperature.FAHRENHEIT
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_hvac_modes = [HVACMode.HEAT_COOL, HVACMode.OFF]
+    _attr_icon = "mdi:thermostat"
 
     def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry, side: str, side_name: str):
         super().__init__(coordinator)

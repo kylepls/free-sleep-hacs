@@ -53,6 +53,7 @@ class LinkBothSidesSwitch(CoordinatorEntity, SwitchEntity):
             "identifiers": {(DOMAIN, f"{self._entry.entry_id}_hub")},
             "name": "Hub",
             "manufacturer": "free-sleep (Unofficial)",
+            "icon": "mdi:bed",
         }
 
     async def async_turn_on(self, **kwargs: Any) -> None:
