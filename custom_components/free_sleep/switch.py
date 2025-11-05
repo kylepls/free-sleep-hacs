@@ -56,10 +56,18 @@ class LinkBothSidesSwitch(CoordinatorEntity, SwitchEntity):
         }
 
     async def async_turn_on(self, **kwargs: Any) -> None:
+        if "settings" not in self.coordinator.data:
+            self.coordinator.data["settings"] = {}
+        self.coordinator.data["settings"]["linkBothSides"] = True
+        self.async_write_ha_state()
         await self.coordinator.client.post(API_SETTINGS, {"linkBothSides": True})
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
+        if "settings" not in self.coordinator.data:
+            self.coordinator.data["settings"] = {}
+        self.coordinator.data["settings"]["linkBothSides"] = False
+        self.async_write_ha_state()
         await self.coordinator.client.post(API_SETTINGS, {"linkBothSides": False})
         await self.coordinator.async_request_refresh()
 
@@ -88,9 +96,21 @@ class SideAwayModeSwitch(CoordinatorEntity, SwitchEntity):
         }
 
     async def async_turn_on(self, **kwargs: Any) -> None:
+        if "settings" not in self.coordinator.data:
+            self.coordinator.data["settings"] = {}
+        if self._side not in self.coordinator.data["settings"]:
+            self.coordinator.data["settings"][self._side] = {}
+        self.coordinator.data["settings"][self._side]["awayMode"] = True
+        self.async_write_ha_state()
         await self.coordinator.client.post(API_SETTINGS, {self._side: {"awayMode": True}})
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
+        if "settings" not in self.coordinator.data:
+            self.coordinator.data["settings"] = {}
+        if self._side not in self.coordinator.data["settings"]:
+            self.coordinator.data["settings"][self._side] = {}
+        self.coordinator.data["settings"][self._side]["awayMode"] = False
+        self.async_write_ha_state()
         await self.coordinator.client.post(API_SETTINGS, {self._side: {"awayMode": False}})
         await self.coordinator.async_request_refresh()
