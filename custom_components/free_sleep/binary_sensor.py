@@ -53,7 +53,6 @@ class HubBaseEntity(CoordinatorEntity, BinarySensorEntity):
             "identifiers": {(DOMAIN, f"{self._entry.entry_id}_hub")},
             "name": "Hub",
             "manufacturer": "free-sleep (Unofficial)",
-            "icon": "mdi:bed",
         }
 
 class WaterLevelOKBinary(HubBaseEntity):
