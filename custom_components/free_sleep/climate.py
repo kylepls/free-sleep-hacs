@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from homeassistant.components.climate import ClimateEntity
@@ -108,15 +109,11 @@ class FreeSleepSideClimate(CoordinatorEntity, ClimateEntity):
         is_on = hvac_mode != HVACMode.OFF
         self.coordinator.data["device_status"][self._side]["isOn"] = is_on
         self.async_write_ha_state()
-        client = self.coordinator.client
-        await client.post(API_DEVICE_STATUS, {self._side: {"isOn": is_on}})
-        await self.coordinator.async_request_refresh()
+        asyncio.create_task(self.coordinator.client.post(API_DEVICE_STATUS, {self._side: {"isOn": is_on}}))
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         if (temp := kwargs.get(ATTR_TEMPERATURE)) is None:
             return
         self.coordinator.data["device_status"][self._side]["targetTemperatureF"] = temp
         self.async_write_ha_state()
-        client = self.coordinator.client
-        await client.post(API_DEVICE_STATUS, {self._side: {"targetTemperatureF": temp}})
-        await self.coordinator.async_request_refresh()
+        asyncio.create_task(self.coordinator.client.post(API_DEVICE_STATUS, {self._side: {"targetTemperatureF": temp}}))

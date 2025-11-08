@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
@@ -60,16 +61,14 @@ class LinkBothSidesSwitch(CoordinatorEntity, SwitchEntity):
             self.coordinator.data["settings"] = {}
         self.coordinator.data["settings"]["linkBothSides"] = True
         self.async_write_ha_state()
-        await self.coordinator.client.post(API_SETTINGS, {"linkBothSides": True})
-        await self.coordinator.async_request_refresh()
+        asyncio.create_task(self.coordinator.client.post(API_SETTINGS, {"linkBothSides": True}))
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         if "settings" not in self.coordinator.data:
             self.coordinator.data["settings"] = {}
         self.coordinator.data["settings"]["linkBothSides"] = False
         self.async_write_ha_state()
-        await self.coordinator.client.post(API_SETTINGS, {"linkBothSides": False})
-        await self.coordinator.async_request_refresh()
+        asyncio.create_task(self.coordinator.client.post(API_SETTINGS, {"linkBothSides": False}))
 
 class SideAwayModeSwitch(CoordinatorEntity, SwitchEntity):
     def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry, side: str, side_name: str):
@@ -102,8 +101,7 @@ class SideAwayModeSwitch(CoordinatorEntity, SwitchEntity):
             self.coordinator.data["settings"][self._side] = {}
         self.coordinator.data["settings"][self._side]["awayMode"] = True
         self.async_write_ha_state()
-        await self.coordinator.client.post(API_SETTINGS, {self._side: {"awayMode": True}})
-        await self.coordinator.async_request_refresh()
+        asyncio.create_task(self.coordinator.client.post(API_SETTINGS, {self._side: {"awayMode": True}}))
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         if "settings" not in self.coordinator.data:
@@ -112,5 +110,4 @@ class SideAwayModeSwitch(CoordinatorEntity, SwitchEntity):
             self.coordinator.data["settings"][self._side] = {}
         self.coordinator.data["settings"][self._side]["awayMode"] = False
         self.async_write_ha_state()
-        await self.coordinator.client.post(API_SETTINGS, {self._side: {"awayMode": False}})
-        await self.coordinator.async_request_refresh()
+        asyncio.create_task(self.coordinator.client.post(API_SETTINGS, {self._side: {"awayMode": False}}))
