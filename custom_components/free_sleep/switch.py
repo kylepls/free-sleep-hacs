@@ -62,6 +62,7 @@ class LinkBothSidesSwitch(CoordinatorEntity, SwitchEntity):
         self.coordinator.data["settings"]["linkBothSides"] = True
         self.async_write_ha_state()
         asyncio.create_task(self.coordinator.client.post(API_SETTINGS, {"linkBothSides": True}))
+        self.coordinator.defer_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         if "settings" not in self.coordinator.data:
@@ -69,6 +70,7 @@ class LinkBothSidesSwitch(CoordinatorEntity, SwitchEntity):
         self.coordinator.data["settings"]["linkBothSides"] = False
         self.async_write_ha_state()
         asyncio.create_task(self.coordinator.client.post(API_SETTINGS, {"linkBothSides": False}))
+        self.coordinator.defer_refresh()
 
 class SideAwayModeSwitch(CoordinatorEntity, SwitchEntity):
     def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry, side: str, side_name: str):
@@ -102,6 +104,7 @@ class SideAwayModeSwitch(CoordinatorEntity, SwitchEntity):
         self.coordinator.data["settings"][self._side]["awayMode"] = True
         self.async_write_ha_state()
         asyncio.create_task(self.coordinator.client.post(API_SETTINGS, {self._side: {"awayMode": True}}))
+        self.coordinator.defer_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         if "settings" not in self.coordinator.data:
@@ -111,3 +114,4 @@ class SideAwayModeSwitch(CoordinatorEntity, SwitchEntity):
         self.coordinator.data["settings"][self._side]["awayMode"] = False
         self.async_write_ha_state()
         asyncio.create_task(self.coordinator.client.post(API_SETTINGS, {self._side: {"awayMode": False}}))
+        self.coordinator.defer_refresh()

@@ -32,6 +32,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         IsPrimingBinary(coordinator, entry),
         SideAlarmBinary(coordinator, entry, side="left", side_name=left_name),
         SideAlarmBinary(coordinator, entry, side="right", side_name=right_name),
+        SidePresenceBinary(coordinator, entry, side="left", side_name=left_name),
+        SidePresenceBinary(coordinator, entry, side="right", side_name=right_name),
     ]
     async_add_entities(entities)
 
@@ -100,6 +102,34 @@ class SideAlarmBinary(CoordinatorEntity, BinarySensorEntity):
     def is_on(self) -> bool | None:
         side = self.coordinator.data["device_status"].get(self._side, {})
         return bool(side.get("isAlarmVibrating"))
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, f"{self._entry.entry_id}_{self._side}_device")},
+            "name": self._side_name,
+            "manufacturer": "free-sleep (Unofficial)",
+            "via_device": (DOMAIN, f"{self._entry.entry_id}_hub"),
+        }
+
+class SidePresenceBinary(CoordinatorEntity, BinarySensorEntity):
+    _attr_device_class = BinarySensorDeviceClass.PRESENCE
+
+    def __init__(self, coordinator: FreeSleepCoordinator, entry: ConfigEntry, side: str, side_name: str):
+        super().__init__(coordinator)
+        self._entry = entry
+        self._side = side
+        self._side_name = side_name
+        self._attr_name = f"{side_name} Presence"
+        self._attr_unique_id = f"{entry.entry_id}_{side}_presence"
+
+    @property
+    def is_on(self) -> bool | None:
+        return self.coordinator.data["presence"][self._side]["present"]
+
+    @property
+    def extra_state_attributes(self):
+        return {"last_updated_at": self.coordinator.data["presence"][self._side]["lastUpdatedAt"]}
 
     @property
     def device_info(self):

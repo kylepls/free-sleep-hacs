@@ -32,4 +32,4 @@ class PrimeNowButton(CoordinatorEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         await self.coordinator.client.post(API_DEVICE_STATUS, {"isPriming": True})
-        await self.coordinator.async_request_refresh()
+        self.coordinator.defer_refresh()

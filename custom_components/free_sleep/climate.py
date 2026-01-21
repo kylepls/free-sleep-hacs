@@ -110,6 +110,7 @@ class FreeSleepSideClimate(CoordinatorEntity, ClimateEntity):
         self.coordinator.data["device_status"][self._side]["isOn"] = is_on
         self.async_write_ha_state()
         asyncio.create_task(self.coordinator.client.post(API_DEVICE_STATUS, {self._side: {"isOn": is_on}}))
+        self.coordinator.defer_refresh()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         if (temp := kwargs.get(ATTR_TEMPERATURE)) is None:
@@ -117,3 +118,4 @@ class FreeSleepSideClimate(CoordinatorEntity, ClimateEntity):
         self.coordinator.data["device_status"][self._side]["targetTemperatureF"] = temp
         self.async_write_ha_state()
         asyncio.create_task(self.coordinator.client.post(API_DEVICE_STATUS, {self._side: {"targetTemperatureF": temp}}))
+        self.coordinator.defer_refresh()
