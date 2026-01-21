@@ -49,16 +49,16 @@ class FreeSleepCoordinator(DataUpdateCoordinator):
         super().__init__(hass, _LOGGER, name="Free Sleep Coordinator", update_interval=None)
 
     def start_polling(self) -> None:
-        self._schedule_refresh(self._poll_interval_seconds)
+        self._schedule_delayed_refresh(self._poll_interval_seconds)
 
     def stop_polling(self) -> None:
         if self._scheduled_refresh_task and not self._scheduled_refresh_task.done():
             self._scheduled_refresh_task.cancel()
 
     def defer_refresh(self) -> None:
-        self._schedule_refresh(self._poll_interval_seconds)
+        self._schedule_delayed_refresh(self._poll_interval_seconds)
 
-    def _schedule_refresh(self, delay_seconds: int) -> None:
+    def _schedule_delayed_refresh(self, delay_seconds: int) -> None:
         if self._scheduled_refresh_task and not self._scheduled_refresh_task.done():
             self._scheduled_refresh_task.cancel()
         self._scheduled_refresh_task = self.hass.async_create_task(self._delayed_refresh(delay_seconds))
@@ -67,7 +67,7 @@ class FreeSleepCoordinator(DataUpdateCoordinator):
     async def _delayed_refresh(self, delay_seconds: int) -> None:
         await asyncio.sleep(delay_seconds)
         await super().async_refresh()
-        self._schedule_refresh(self._poll_interval_seconds)
+        self._schedule_delayed_refresh(self._poll_interval_seconds)
 
     def _handle_scheduled_done(self, task: asyncio.Task) -> None:
         if task.cancelled():
