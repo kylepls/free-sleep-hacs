@@ -12,5 +12,7 @@ PLATFORMS = ["climate", "binary_sensor", "sensor", "button", "switch"]
 
 UPDATE_INTERVAL_SECS_DEFAULT = 5
 
+PRESENCE_UPDATE_INTERVAL_SECS = 0.5
+
 CONF_VITALS_WINDOW_HOURS = "vitals_window_hours"
 DEFAULT_VITALS_WINDOW_HOURS = 24

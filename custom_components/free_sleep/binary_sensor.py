@@ -23,6 +23,7 @@ def _resolve_side_name(settings: dict, side: str) -> str:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator: FreeSleepCoordinator = data["coordinator"]
+    presence_coordinator = data["presence_coordinator"]
     settings = coordinator.data.get("settings") or {}
     left_name = _resolve_side_name(settings, "left")
     right_name = _resolve_side_name(settings, "right")
@@ -32,8 +33,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         IsPrimingBinary(coordinator, entry),
         SideAlarmBinary(coordinator, entry, side="left", side_name=left_name),
         SideAlarmBinary(coordinator, entry, side="right", side_name=right_name),
-        SidePresenceBinary(coordinator, entry, side="left", side_name=left_name),
-        SidePresenceBinary(coordinator, entry, side="right", side_name=right_name),
+        SidePresenceBinary(presence_coordinator, entry, side="left", side_name=left_name),
+        SidePresenceBinary(presence_coordinator, entry, side="right", side_name=right_name),
     ]
     async_add_entities(entities)
 
@@ -125,11 +126,11 @@ class SidePresenceBinary(CoordinatorEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool | None:
-        return self.coordinator.data["presence"][self._side]["present"]
+        return self.coordinator.data[self._side]["present"]
 
     @property
     def extra_state_attributes(self):
-        return {"last_updated_at": self.coordinator.data["presence"][self._side]["lastUpdatedAt"]}
+        return {"last_updated_at": self.coordinator.data[self._side]["lastUpdatedAt"]}
 
     @property
     def device_info(self):
