@@ -74,6 +74,9 @@ class FreeSleepCoordinator(DataUpdateCoordinator):
             return
         task.result()
 
+    def _schedule_refresh(self) -> None:
+        super()._schedule_refresh()
+
     async def _async_update_data(self):
         device_status = await self.client.get(API_DEVICE_STATUS)
         settings = await self.client.get(API_SETTINGS)
